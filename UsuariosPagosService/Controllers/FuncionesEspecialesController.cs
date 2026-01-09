@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.DTOs;
 using UsuariosPagosService.Repositories;
@@ -7,7 +6,6 @@ namespace UsuariosPagosService.Controllers;
 
 [ApiController]
 [Route("api/funciones-especiales")]
-[Authorize]
 public class FuncionesEspecialesController : ControllerBase
 {
     private readonly FuncionesEspecialesRepository _repository;

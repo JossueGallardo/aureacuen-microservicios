@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Data;
 using Shared.DTOs;
@@ -7,7 +6,6 @@ namespace UsuariosPagosService.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize]
 public class PdfsController : ControllerBase
 {
     private readonly PdfRepository _repository;

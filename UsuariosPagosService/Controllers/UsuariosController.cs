@@ -43,6 +43,7 @@ public class UsuariosController : ControllerBase
     }
 
     [HttpPost]
+    [AllowAnonymous]
     public async Task<ActionResult<UsuarioInternoDto>> Create([FromBody] UsuarioInternoDto dto)
     {
         var result = await _repository.CrearAsync(dto);

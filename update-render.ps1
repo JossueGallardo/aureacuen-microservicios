@@ -19,7 +19,7 @@ Write-Host ""
 
 # 2. Commit
 Write-Host "[2/4] Creando commit..." -ForegroundColor Yellow
-$mensaje = "Improve: Swagger auto-agrega Bearer en token JWT"
+$mensaje = "Fix: Actualizar requisitos JWT - Registro y FuncionesEspeciales públicos"
 git commit -m $mensaje
 
 if ($LASTEXITCODE -ne 0) {
@@ -52,26 +52,20 @@ Write-Host ""
 Write-Host "?? Monitorea el progreso en:" -ForegroundColor White
 Write-Host "   https://dashboard.render.com" -ForegroundColor Blue
 Write-Host ""
-Write-Host "?? Servicios que se redespliegan:" -ForegroundColor White
-Write-Host "   - ApiGateway" -ForegroundColor Yellow
+Write-Host "?? Servicio que se redesplegará:" -ForegroundColor White
 Write-Host "   - UsuariosPagosService" -ForegroundColor Yellow
-Write-Host "   - CatalogosService" -ForegroundColor Yellow
 Write-Host ""
-Write-Host "?? Después del redespliegue:" -ForegroundColor White
-Write-Host "   1. Genera token en ApiGateway" -ForegroundColor Cyan
-Write-Host "   2. En Swagger, click 'Authorize'" -ForegroundColor Cyan
-Write-Host "   3. Pega SOLO el token (sin 'Bearer')" -ForegroundColor Green
-Write-Host "   4. Swagger agregará 'Bearer' automáticamente" -ForegroundColor Green
-Write-Host "   5. Prueba GET /api/usuarios" -ForegroundColor Cyan
+Write-Host "?? Cambios aplicados:" -ForegroundColor White
+Write-Host "   ? POST /api/Usuarios ahora es público (registro)" -ForegroundColor Green
+Write-Host "   ? /api/funciones-especiales/* todos públicos" -ForegroundColor Green
+Write-Host "   ? /api/Pdfs/* todos públicos" -ForegroundColor Green
 Write-Host ""
-Write-Host "?? MEJORA APLICADA:" -ForegroundColor White
-Write-Host "   Ahora solo necesitas pegar el token" -ForegroundColor Green
-Write-Host "   NO escribas 'Bearer' manualmente" -ForegroundColor Green
+Write-Host "?? Prueba sin JWT:" -ForegroundColor White
+Write-Host "   POST https://usuarios-pagos-service.onrender.com/api/Usuarios" -ForegroundColor Blue
+Write-Host "   POST https://usuarios-pagos-service.onrender.com/api/funciones-especiales/prereserva" -ForegroundColor Blue
 Write-Host ""
-Write-Host "?? URLs:" -ForegroundColor White
-Write-Host "   ApiGateway:           https://apigateway-hyaw.onrender.com/swagger" -ForegroundColor Blue
-Write-Host "   UsuariosPagosService: https://usuarios-pagos-service.onrender.com/swagger" -ForegroundColor Blue
-Write-Host "   CatalogosService:     https://catalogos-service.onrender.com/swagger" -ForegroundColor Blue
+Write-Host "?? Lee la documentación actualizada:" -ForegroundColor White
+Write-Host "   LISTA_APIS_JWT_ACTUALIZADA.md" -ForegroundColor Blue
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host " ? ACTUALIZACIÓN COMPLETA" -ForegroundColor Green
