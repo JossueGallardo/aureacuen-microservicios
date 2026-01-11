@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.IdentityModel.Tokens;
 using ReservasService.Services;
 using Shared.Data;
+using Shared.EventBus;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -44,6 +45,7 @@ builder.Services.AddGrpc();
 // JWT Authentication
 // =======================
 var jwtKey = builder.Configuration["Jwt:Key"]
+             ?? builder.Configuration["JWT_SECRET_KEY"]
              ?? "HotelMicroservicesSecretKey2024!@#$%^&*()_+";
 var jwtIssuer = builder.Configuration["Jwt:Issuer"]
                 ?? "HotelMicroservices";
@@ -77,8 +79,34 @@ builder.Services.AddScoped<HabxResRepository>();
 builder.Services.AddScoped<DesxHabxResRepository>();
 builder.Services.AddScoped<HoldRepository>();
 
-// EventBus (usamos NullEventBus si no hay RabbitMQ configurado)
-builder.Services.AddSingleton<IEventBus, NullEventBus>();
+//
+// =======================
+// EVENT BUS (RABBITMQ OPCIONAL)
+// =======================
+builder.Services.AddSingleton<IEventBus>(sp =>
+{
+    var config = sp.GetRequiredService<IConfiguration>();
+    var logger = sp.GetRequiredService<ILoggerFactory>()
+                   .CreateLogger("EventBus");
+
+    var host = config["RabbitMQ:Host"];
+
+    if (string.IsNullOrWhiteSpace(host))
+    {
+        logger.LogWarning("RabbitMQ no configurado, usando NullEventBus");
+        return new NullEventBus();
+    }
+
+    try
+    {
+        return new RabbitMqEventBus(host);
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "RabbitMQ no disponible, usando NullEventBus");
+        return new NullEventBus();
+    }
+});
 
 //
 // =======================
@@ -94,6 +122,7 @@ var app = builder.Build();
 // =======================
 app.UseAuthentication();
 app.UseAuthorization();
+
 // Habilitar gRPC-Web para compatibilidad con proxies HTTP/1.1 (Render, Cloudflare, etc.)
 app.UseGrpcWeb();
 
