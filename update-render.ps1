@@ -19,7 +19,7 @@ Write-Host ""
 
 # 2. Commit
 Write-Host "[2/4] Creando commit..." -ForegroundColor Yellow
-$mensaje = "feat: Migrar CancelarReserva de .NET Framework a .NET 8"
+$mensaje = "feat: Inserción automática de pagos en reservas de integración"
 git commit -m $mensaje
 
 if ($LASTEXITCODE -ne 0) {
@@ -46,6 +46,17 @@ Write-Host ""
 # 4. Información
 Write-Host "[4/4] Siguiente paso" -ForegroundColor Yellow
 Write-Host ""
+Write-Host "⚠️  IMPORTANTE: Ejecutar el stored procedure en SQL Server" -ForegroundColor Yellow
+Write-Host ""
+Write-Host "Opción 1: Usar el script PowerShell" -ForegroundColor White
+Write-Host "  .\ejecutar-sp.ps1" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "Opción 2: Ejecutar manualmente" -ForegroundColor White
+Write-Host "  1. Abrir SQL Server Management Studio" -ForegroundColor Gray
+Write-Host "  2. Conectar a: db31651.public.databaseasp.net" -ForegroundColor Gray
+Write-Host "  3. Abrir: SQL/sp_insertarPagoIntegracion.sql" -ForegroundColor Gray
+Write-Host "  4. Ejecutar (F5)" -ForegroundColor Gray
+Write-Host ""
 Write-Host "✨ Render detectará el cambio automáticamente" -ForegroundColor Cyan
 Write-Host "⏳ Espera 5-7 minutos mientras redesplega" -ForegroundColor Cyan
 Write-Host ""
@@ -56,30 +67,24 @@ Write-Host "🔍 Servicios que se redespliegan:" -ForegroundColor White
 Write-Host "   - ApiGateway" -ForegroundColor Yellow
 Write-Host ""
 Write-Host "📝 Cambios aplicados:" -ForegroundColor White
-Write-Host "   ✅ Migrado CancelarReserva de .NET Framework a .NET 8" -ForegroundColor Green
-Write-Host "   ✅ Comportamiento idéntico al API anterior" -ForegroundColor Green
-Write-Host "   ✅ Siempre retorna 200 OK (excepto errores graves)" -ForegroundColor Green
-Write-Host "   ✅ Deserializa respuesta de RECA correctamente" -ForegroundColor Green
-Write-Host "   ✅ Manejo graceful de errores de conexión" -ForegroundColor Green
+Write-Host "   ✅ Creado sp_insertarPagoIntegracion" -ForegroundColor Green
+Write-Host "   ✅ Inserción automática de pagos al confirmar reserva" -ForegroundColor Green
+Write-Host "   ✅ Cancelación retorna montoPagado correctamente" -ForegroundColor Green
+Write-Host "   ✅ Llamadas directas a stored procedures (no RECA API)" -ForegroundColor Green
 Write-Host ""
 Write-Host "🧪 Después del redespliegue prueba:" -ForegroundColor White
 Write-Host ""
-Write-Host "   # Sin idReserva" -ForegroundColor Gray
-Write-Host "   DELETE /api/integracion/reservas/cancelar" -ForegroundColor Cyan
-Write-Host "   → 200 OK { success: false, montoPagado: 0, mensaje: 'Debe enviar idReserva.' }" -ForegroundColor Gray
+Write-Host "   # Confirmar reserva" -ForegroundColor Gray
+Write-Host "   POST /api/integracion/reservas/confirmar" -ForegroundColor Cyan
+Write-Host "   → Verifica que se inserta el PAGO en la BD" -ForegroundColor Gray
 Write-Host ""
-Write-Host "   # Reserva no activa" -ForegroundColor Gray
-Write-Host "   DELETE /api/integracion/reservas/cancelar?idReserva=310" -ForegroundColor Cyan
-Write-Host "   → 200 OK { success: false, montoPagado: 0, mensaje: 'La reserva ya no se encuentra activa.' }" -ForegroundColor Gray
-Write-Host ""
-Write-Host "   # Cancelación exitosa" -ForegroundColor Gray
-Write-Host "   DELETE /api/integracion/reservas/cancelar?idReserva=151" -ForegroundColor Cyan
-Write-Host "   → 200 OK { success: true, montoPagado: 150.50, mensaje: '' }" -ForegroundColor Gray
+Write-Host "   # Cancelar reserva" -ForegroundColor Gray
+Write-Host "   DELETE /api/integracion/reservas/cancelar?idReserva=265" -ForegroundColor Cyan
+Write-Host "   → 200 OK { success: true, montoPagado: 170.77, mensaje: '' }" -ForegroundColor Gray
 Write-Host ""
 Write-Host "📚 Documentación completa:" -ForegroundColor White
-Write-Host "   - MIGRACION_CANCELAR_RESERVA.md" -ForegroundColor Cyan
-Write-Host "   - ACTUALIZACION_CANCELAR_RESERVA.md" -ForegroundColor Cyan
-Write-Host "   - FIX_FECHAS_OCUPADAS_DUPLICADAS.md" -ForegroundColor Cyan
+Write-Host "   - SOLUCION_PAGO_INTEGRACION.md" -ForegroundColor Cyan
+Write-Host "   - SQL/sp_insertarPagoIntegracion.sql" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host " ✅ ACTUALIZACIÓN COMPLETA" -ForegroundColor Green

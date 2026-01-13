@@ -1,5 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Text.Json;
+using Microsoft.Data.SqlClient;
+using System.Data;
+using Shared.Data;
 
 namespace ApiGateway.Controllers.Integracion;
 
@@ -47,54 +50,10 @@ public class IntegracionCancelarReservaController : ControllerBase
 
         try
         {
-            _logger.LogInformation("Cancelando reserva {IdReserva} en RECA API", idReserva.Value);
+            _logger.LogInformation("Cancelando reserva {IdReserva} directamente en BD", idReserva.Value);
             
-            // Llamar a RECA API (tu API anterior)
-            // GET http://aureacuenrest.runasp.net/api/v1/hoteles/cancel?idReserva=310
-            var response = await _http.DeleteAsync(
-                $"/api/v1/hoteles/cancel?idReserva={idReserva.Value}"
-            );
-
-            var content = await response.Content.ReadAsStringAsync();
-            
-            _logger.LogInformation("RECA API response status: {StatusCode}, content: {Content}", 
-                response.StatusCode, content);
-
-            // RECA siempre retorna 200 OK, incluso en errores de negocio
-            // Deserializar la respuesta
-            CancelarReservaResponse? result = null;
-            
-            try
-            {
-                result = JsonSerializer.Deserialize<CancelarReservaResponse>(content, new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                });
-            }
-            catch (JsonException ex)
-            {
-                _logger.LogError(ex, "Error al deserializar respuesta de RECA: {Content}", content);
-            }
-
-            // Si no se pudo deserializar o es null
-            if (result == null)
-            {
-                _logger.LogWarning("Failed to deserialize RECA response: {Content}", content);
-                
-                // Si RECA retornó error HTTP (500, etc.)
-                if (!response.IsSuccessStatusCode)
-                {
-                    return Ok(new CancelarReservaResponse
-                    {
-                        Success = false,
-                        MontoPagado = 0,
-                        Mensaje = "No se pudo procesar la cancelacion."
-                    });
-                }
-                
-                // Intentar retornar el contenido tal cual si es JSON válido
-                return Ok(content);
-            }
+            // Llamar directamente al stored procedure
+            var result = await CancelarReservaInterno(idReserva.Value);
 
             _logger.LogInformation("Reserva {IdReserva} procesada. Success: {Success}, Monto: {Monto}, Mensaje: {Mensaje}", 
                 idReserva.Value, result.Success, result.MontoPagado, result.Mensaje);
@@ -110,19 +69,19 @@ public class IntegracionCancelarReservaController : ControllerBase
             //     });
             // }
 
-            // Siempre retornar 200 OK con el resultado
+            // Siempre retornar 200 OK con el resultado (como la API anterior)
             return Ok(result);
         }
-        catch (HttpRequestException ex)
+        catch (SqlException ex)
         {
-            _logger.LogError(ex, "Error de conexión al cancelar reserva {IdReserva}", idReserva.Value);
+            _logger.LogError(ex, "Error de BD al cancelar reserva {IdReserva}", idReserva.Value);
             
             // Retornar 200 OK con error (como lo hacía tu API anterior)
             return Ok(new CancelarReservaResponse
             {
                 Success = false,
                 MontoPagado = 0,
-                Mensaje = "Error de conexión con el servicio de reservas"
+                Mensaje = $"Error de base de datos: {ex.Message}"
             });
         }
         catch (Exception ex)
@@ -136,6 +95,47 @@ public class IntegracionCancelarReservaController : ControllerBase
                 type = ex.GetType().Name
             });
         }
+    }
+
+    /// <summary>
+    /// Llama al stored procedure sp_cancelarReservaHotel
+    /// </summary>
+    private async Task<CancelarReservaResponse> CancelarReservaInterno(int idReserva)
+    {
+        var connectionString = DatabaseConfig.ConnectionString;
+
+        await using var cn = new SqlConnection(connectionString);
+        await using var cmd = new SqlCommand("dbo.sp_cancelarReservaHotel", cn)
+        {
+            CommandType = CommandType.StoredProcedure
+        };
+
+        cmd.Parameters.Add("@ID_RESERVA", SqlDbType.Int).Value = idReserva;
+
+        await cn.OpenAsync();
+        await using var rd = await cmd.ExecuteReaderAsync();
+
+        if (!await rd.ReadAsync())
+        {
+            return new CancelarReservaResponse
+            {
+                Success = false,
+                MontoPagado = 0,
+                Mensaje = "No se pudo procesar la cancelacion."
+            };
+        }
+
+        // Leer el resultado del SP
+        bool ok = rd["OK"] != DBNull.Value && Convert.ToBoolean(rd["OK"]);
+        decimal? montoPagado = rd["MONTO_PAGADO"] == DBNull.Value ? null : Convert.ToDecimal(rd["MONTO_PAGADO"]);
+        string? mensaje = rd["MENSAJE"] as string;
+
+        return new CancelarReservaResponse
+        {
+            Success = ok,
+            MontoPagado = montoPagado ?? 0,
+            Mensaje = mensaje ?? string.Empty
+        };
     }
 }
 
