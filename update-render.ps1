@@ -19,7 +19,7 @@ Write-Host ""
 
 # 2. Commit
 Write-Host "[2/4] Creando commit..." -ForegroundColor Yellow
-$mensaje = "Fix: Corregir error de clave duplicada en fechas-ocupadas gRPC"
+$mensaje = "feat: Migrar CancelarReserva de .NET Framework a .NET 8"
 git commit -m $mensaje
 
 if ($LASTEXITCODE -ne 0) {
@@ -52,24 +52,34 @@ Write-Host ""
 Write-Host "📊 Monitorea el progreso en:" -ForegroundColor White
 Write-Host "   https://dashboard.render.com" -ForegroundColor Blue
 Write-Host ""
-Write-Host "🔍 Servicio que se redesplegará:" -ForegroundColor White
+Write-Host "🔍 Servicios que se redespliegan:" -ForegroundColor White
 Write-Host "   - ApiGateway" -ForegroundColor Yellow
 Write-Host ""
-Write-Host "📝 Cambio aplicado:" -ForegroundColor White
-Write-Host "   ✅ Corregida lógica de fechas-ocupadas" -ForegroundColor Green
-Write-Host "   ✅ Ahora maneja múltiples HabxRes por reserva" -ForegroundColor Green
-Write-Host "   ✅ Evita error: 'An item with the same key has already been added'" -ForegroundColor Green
+Write-Host "📝 Cambios aplicados:" -ForegroundColor White
+Write-Host "   ✅ Migrado CancelarReserva de .NET Framework a .NET 8" -ForegroundColor Green
+Write-Host "   ✅ Comportamiento idéntico al API anterior" -ForegroundColor Green
+Write-Host "   ✅ Siempre retorna 200 OK (excepto errores graves)" -ForegroundColor Green
+Write-Host "   ✅ Deserializa respuesta de RECA correctamente" -ForegroundColor Green
+Write-Host "   ✅ Manejo graceful de errores de conexión" -ForegroundColor Green
 Write-Host ""
 Write-Host "🧪 Después del redespliegue prueba:" -ForegroundColor White
-Write-Host "   GET /api/reservas-grpc/fechas-ocupadas/HAJO000001" -ForegroundColor Cyan
 Write-Host ""
-Write-Host "✅ Respuesta esperada:" -ForegroundColor White
-Write-Host "   {" -ForegroundColor Gray
-Write-Host '     "success": true,' -ForegroundColor Gray
-Write-Host '     "idHabitacion": "HAJO000001",' -ForegroundColor Gray
-Write-Host '     "fechasOcupadas": ["2026-01-11", "2026-01-12", ...],' -ForegroundColor Gray
-Write-Host '     "totalFechas": 150' -ForegroundColor Gray
-Write-Host "   }" -ForegroundColor Gray
+Write-Host "   # Sin idReserva" -ForegroundColor Gray
+Write-Host "   DELETE /api/integracion/reservas/cancelar" -ForegroundColor Cyan
+Write-Host "   → 200 OK { success: false, montoPagado: 0, mensaje: 'Debe enviar idReserva.' }" -ForegroundColor Gray
+Write-Host ""
+Write-Host "   # Reserva no activa" -ForegroundColor Gray
+Write-Host "   DELETE /api/integracion/reservas/cancelar?idReserva=310" -ForegroundColor Cyan
+Write-Host "   → 200 OK { success: false, montoPagado: 0, mensaje: 'La reserva ya no se encuentra activa.' }" -ForegroundColor Gray
+Write-Host ""
+Write-Host "   # Cancelación exitosa" -ForegroundColor Gray
+Write-Host "   DELETE /api/integracion/reservas/cancelar?idReserva=151" -ForegroundColor Cyan
+Write-Host "   → 200 OK { success: true, montoPagado: 150.50, mensaje: '' }" -ForegroundColor Gray
+Write-Host ""
+Write-Host "📚 Documentación completa:" -ForegroundColor White
+Write-Host "   - MIGRACION_CANCELAR_RESERVA.md" -ForegroundColor Cyan
+Write-Host "   - ACTUALIZACION_CANCELAR_RESERVA.md" -ForegroundColor Cyan
+Write-Host "   - FIX_FECHAS_OCUPADAS_DUPLICADAS.md" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host " ✅ ACTUALIZACIÓN COMPLETA" -ForegroundColor Green
